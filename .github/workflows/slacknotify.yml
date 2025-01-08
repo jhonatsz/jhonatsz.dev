@@ -73,7 +73,7 @@ jobs:
     steps:
       - name: Notify Slack of Start
         id: notify-start
-        uses: jhonatsz/actions-slacknotify@v0.2
+        uses: jhonatsz/actions-slacknotify@v0.2.0
         with:
           slackToken: ${{ vars.SLACK_TOKEN }}
           channelId: ${{ vars.CHANNEL_ID }}
