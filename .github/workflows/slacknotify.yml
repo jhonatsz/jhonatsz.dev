@@ -1,0 +1,85 @@
+name: SlackNotify
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Select a Region
+        options:
+        - 'a'
+        - 'b'
+        - 'c'
+        - 'all'
+
+jobs:
+  pipelineStarted:
+    runs-on: ubuntu-latest
+    if: always()
+    outputs:
+      timestamp: ${{ steps.notify-start.outputs.ts }}
+    steps:
+      - name: Notify Slack of Start
+        id: notify-start
+        uses: jhonatsz/actions-slacknotify@v0.2.0
+        with:
+          slackToken: ${{ vars.SLACK_TOKEN }}
+          channelId: ${{ vars.CHANNEL_ID }}
+          notifStatus: "pipelineStart"
+          label: "Test - Deployment"
+          pipelineUrl: "test-url"
+          details: "sasasasa"
+
+      - name: Set timestamp output
+        run: |
+          echo "The TS was ${{ steps.notify-start.outputs.ts }}"
+          echo "timestamp=${{ steps.notify-start.outputs.ts }}" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: [pipelineStarted]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment != 'all' }}
+    steps:
+      - name: echo here
+        run: echo hello world
+
+  deployA:
+    needs: [pipelineStarted]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'all' }}
+    steps:
+      - name: echo here
+        run: echo hello world
+  deployB:
+    needs: [pipelineStarted]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'all' }}
+    steps:
+      - name: echo here
+        run: echo hello world
+
+  deployC:
+    needs: [pipelineStarted]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'all' }}
+    steps:
+      - name: echo here
+        run: echo hello world
+
+  pipelineFinished:
+    needs: [pipelineStarted, deploy, deployA, deployB, deployC]
+    runs-on: ubuntu-latest
+    if:  ${{ !failure() && !cancelled() }}
+    steps:
+      - name: Notify Slack of Start
+        id: notify-start
+        uses: jhonatsz/actions-slacknotify@v0.2
+        with:
+          slackToken: ${{ vars.SLACK_TOKEN }}
+          channelId: ${{ vars.CHANNEL_ID }}
+          ts: "${{ needs.pipelineStarted.outputs.timestamp }}"
+          notifStatus: "pipelineSuccess"
+          label: "Test - Deployment"
+          pipelineUrl: "test-url"
+          details: "failed"
+
